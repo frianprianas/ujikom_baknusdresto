@@ -136,9 +136,9 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             const Text(
               'Ubah alamat API Laravel Baknus Dresto sesuai koneksi Anda:\n'
-              '• Emulator: http://10.0.2.2:8000/api/mobile\n'
-              '• Web/Windows: http://127.0.0.1:8000/api/mobile\n'
-              '• Device HP Asli: http://[IP-Komputer]:8000/api/mobile',
+              '• Cloud Server VPS: http://202.10.40.177/api/mobile\n'
+              '• Emulator Lokal: http://10.0.2.2:8000/api/mobile\n'
+              '• Local Web/PC: http://127.0.0.1:8000/api/mobile',
               style: TextStyle(fontSize: 11, color: AppColors.textMuted),
             ),
             const SizedBox(height: 12),

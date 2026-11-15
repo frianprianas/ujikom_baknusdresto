@@ -15,13 +15,8 @@ class ApiService {
   ApiService._internal();
 
   static String get defaultBaseUrl {
-    if (kIsWeb) {
-      return 'http://127.0.0.1:8000/api/mobile';
-    } else if (Platform.isAndroid) {
-      return 'http://10.0.2.2:8000/api/mobile';
-    } else {
-      return 'http://127.0.0.1:8000/api/mobile';
-    }
+    // Alamat VPS Cloud Baknus Dresto
+    return 'http://202.10.40.177/api/mobile';
   }
 
   String baseUrl = defaultBaseUrl;
