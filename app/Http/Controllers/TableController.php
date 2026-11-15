@@ -35,4 +35,10 @@ class TableController extends Controller
             'table' => $table,
         ]);
     }
+
+    public function printAllQr()
+    {
+        $tables = RestaurantTable::orderBy('floor_section')->orderBy('table_number')->get();
+        return view('tables.print_qr', compact('tables'));
+    }
 }

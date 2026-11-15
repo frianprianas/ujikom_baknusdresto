@@ -10,6 +10,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PosController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\TableController;
+use App\Http\Controllers\TableOrderController;
 use Illuminate\Support\Facades\Route;
 
 // Redirect root ke POS Billing
@@ -44,7 +45,14 @@ Route::prefix('kitchen')->name('kitchen.')->group(function () {
 // Tables Management
 Route::prefix('tables')->name('tables.')->group(function () {
     Route::get('/', [TableController::class, 'index'])->name('index');
+    Route::get('/print-qr', [TableController::class, 'printAllQr'])->name('print_qr');
     Route::post('/{id}/status', [TableController::class, 'updateStatus'])->name('status');
+});
+
+// Self-Order Pelanggan via QR Code Meja (Customer Table Order)
+Route::prefix('order')->name('table.order.')->group(function () {
+    Route::get('/meja/{table}', [TableOrderController::class, 'showTableOrder'])->name('show');
+    Route::post('/meja/{table}', [TableOrderController::class, 'storeTableOrder'])->name('store');
 });
 
 // Bills & Invoices
