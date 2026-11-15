@@ -5,6 +5,7 @@ import '../models/table.dart';
 import '../services/api_service.dart';
 import '../theme/app_colors.dart';
 import 'payment_screen.dart';
+import 'qr_scanner_screen.dart';
 import 'table_picker_screen.dart';
 
 class CartScreen extends StatefulWidget {
@@ -13,6 +14,8 @@ class CartScreen extends StatefulWidget {
   final RestaurantTableModel? initialTable;
   final bool isTabScreen;
   final VoidCallback onCartUpdated;
+  final ValueChanged<RestaurantTableModel?>? onTableSelected;
+  final ValueChanged<String>? onOrderTypeChanged;
 
   const CartScreen({
     super.key,
@@ -21,6 +24,8 @@ class CartScreen extends StatefulWidget {
     this.initialTable,
     this.isTabScreen = false,
     required this.onCartUpdated,
+    this.onTableSelected,
+    this.onOrderTypeChanged,
   });
 
   @override
@@ -51,6 +56,21 @@ class _CartScreenState extends State<CartScreen> {
     _addressController.text = u != null && u.address != null
         ? '${u.address} (Patokan: ${u.addressBenchmark ?? "-"})'
         : 'Jl. Merdeka No. 12, Jakarta';
+  }
+
+  @override
+  void didUpdateWidget(covariant CartScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialTable != oldWidget.initialTable) {
+      setState(() {
+        _selectedTable = widget.initialTable;
+      });
+    }
+    if (widget.initialOrderType != oldWidget.initialOrderType) {
+      setState(() {
+        _orderType = widget.initialOrderType;
+      });
+    }
   }
 
   double get _subtotal => widget.cart.fold(0, (sum, item) => sum + item.subtotal);
@@ -354,26 +374,71 @@ class _CartScreenState extends State<CartScreen> {
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: _selectedTable != null ? Colors.grey.shade100 : AppColors.accent,
-                                    foregroundColor: _selectedTable != null ? AppColors.textDark : Colors.black,
-                                    elevation: 0,
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                  ),
-                                  onPressed: () async {
-                                    final res = await Navigator.push<RestaurantTableModel>(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => TablePickerScreen(selectedTable: _selectedTable),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Tombol Scan QR Meja
+                                    InkWell(
+                                      onTap: () async {
+                                        final res = await Navigator.push<RestaurantTableModel>(
+                                          context,
+                                          MaterialPageRoute(builder: (_) => const QrScannerScreen()),
+                                        );
+                                        if (res != null) {
+                                          setState(() => _selectedTable = res);
+                                          widget.onTableSelected?.call(res);
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text('${res.tableNumber} dipilih via QR Code!'),
+                                              backgroundColor: AppColors.success,
+                                            ),
+                                          );
+                                        }
+                                      },
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.accent,
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: const Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(Icons.qr_code_scanner, color: Colors.black, size: 14),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              'Scan QR',
+                                              style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    );
-                                    if (res != null) {
-                                      setState(() => _selectedTable = res);
-                                    }
-                                  },
-                                  child: Text(_selectedTable != null ? 'Ganti Meja' : 'Pilih Meja', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: _selectedTable != null ? Colors.grey.shade100 : AppColors.primary,
+                                        foregroundColor: _selectedTable != null ? AppColors.textDark : Colors.white,
+                                        elevation: 0,
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                      ),
+                                      onPressed: () async {
+                                        final res = await Navigator.push<RestaurantTableModel>(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => TablePickerScreen(selectedTable: _selectedTable),
+                                          ),
+                                        );
+                                        if (res != null) {
+                                          setState(() => _selectedTable = res);
+                                          widget.onTableSelected?.call(res);
+                                        }
+                                      },
+                                      child: Text(_selectedTable != null ? 'Ganti' : 'Pilih Meja', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),

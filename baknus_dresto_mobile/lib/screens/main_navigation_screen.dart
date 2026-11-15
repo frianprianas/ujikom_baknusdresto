@@ -63,6 +63,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         initialTable: _selectedTable,
         isTabScreen: true,
         onCartUpdated: () => setState(() {}),
+        onTableSelected: (tbl) => setState(() => _selectedTable = tbl),
+        onOrderTypeChanged: (type) => setState(() => _orderType = type),
       ),
 
       // TAB 3: PROFIL & REGISTRASI OTP

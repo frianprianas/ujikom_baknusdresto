@@ -653,6 +653,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                 initialOrderType: _currentOrderType,
                                 initialTable: _selectedTable,
                                 onCartUpdated: () => setState(() {}),
+                                onTableSelected: (tbl) {
+                                  widget.onTableSelected?.call(tbl);
+                                  setState(() => _localTable = tbl);
+                                },
+                                onOrderTypeChanged: (type) {
+                                  widget.onOrderTypeChanged?.call(type);
+                                },
                               ),
                             ),
                           );
