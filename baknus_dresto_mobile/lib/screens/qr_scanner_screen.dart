@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import '../models/table.dart';
 import '../services/api_service.dart';
 import '../theme/app_colors.dart';
@@ -13,16 +14,24 @@ class QrScannerScreen extends StatefulWidget {
 class _QrScannerScreenState extends State<QrScannerScreen>
     with SingleTickerProviderStateMixin {
   final ApiService _api = ApiService();
+  late MobileScannerController _scannerController;
   late AnimationController _animCtrl;
   late Animation<double> _laserAnim;
 
   List<RestaurantTableModel> _tables = [];
   bool _isLoading = true;
+  bool _isProcessingScan = false;
   bool _flashOn = false;
 
   @override
   void initState() {
     super.initState();
+    _scannerController = MobileScannerController(
+      detectionSpeed: DetectionSpeed.normal,
+      facing: CameraFacing.back,
+      torchEnabled: false,
+    );
+
     _animCtrl = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -38,6 +47,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
   @override
   void dispose() {
     _animCtrl.dispose();
+    _scannerController.dispose();
     super.dispose();
   }
 
@@ -51,6 +61,20 @@ class _QrScannerScreenState extends State<QrScannerScreen>
     }
   }
 
+  void _onBarcodeDetected(BarcodeCapture capture) {
+    if (_isProcessingScan) return;
+
+    final List<Barcode> barcodes = capture.barcodes;
+    for (final barcode in barcodes) {
+      final raw = barcode.rawValue;
+      if (raw != null && raw.trim().isNotEmpty) {
+        setState(() => _isProcessingScan = true);
+        _handleRawData(raw);
+        break;
+      }
+    }
+  }
+
   void _handleRawData(String raw) {
     if (_tables.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -59,6 +83,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
           backgroundColor: AppColors.warning,
         ),
       );
+      setState(() => _isProcessingScan = false);
       return;
     }
 
@@ -101,6 +126,10 @@ class _QrScannerScreenState extends State<QrScannerScreen>
           backgroundColor: AppColors.danger,
         ),
       );
+      // Tunggu sebentar sebelum scan berikutnya diperbolehkan
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) setState(() => _isProcessingScan = false);
+      });
     }
   }
 
@@ -148,7 +177,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
             ),
             const SizedBox(height: 4),
             Text(
-              'Kamera berhasil membaca barcode meja restoran.',
+              'Kamera asli berhasil membaca barcode meja fisik.',
               style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
             ),
             const SizedBox(height: 18),
@@ -239,7 +268,12 @@ class _QrScannerScreenState extends State<QrScannerScreen>
           ],
         ),
       ),
-    );
+    ).then((_) {
+      // Izinkan scan kembali jika bottom sheet ditutup
+      if (mounted) {
+        setState(() => _isProcessingScan = false);
+      }
+    });
   }
 
   void _openManualInputDialog() {
@@ -379,7 +413,39 @@ class _QrScannerScreenState extends State<QrScannerScreen>
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // SCANNER CAMERA SIMULATED VIEWFINDER
+          // 1. LIVE HARDWARE CAMERA SCANNER
+          Positioned.fill(
+            child: MobileScanner(
+              controller: _scannerController,
+              onDetect: _onBarcodeDetected,
+              errorBuilder: (context, error, child) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.videocam_off, color: Colors.white54, size: 64),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Kamera Tidak Terdeteksi',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Jika di emulator/PC tanpa webcam, gunakan tombol Simulasi Scan di bawah.',
+                          style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          // 2. SCANNER CAMERA VIEWFINDER OVERLAY
           Center(
             child: Container(
               width: 260,
@@ -483,7 +549,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
             ),
           ),
 
-          // TOP APP BAR OVERLAY
+          // 3. TOP APP BAR OVERLAY
           Positioned(
             top: 0,
             left: 0,
@@ -505,19 +571,30 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                         ),
                         Text(
-                          'Self-Order Baknus Dresto',
+                          'Arahkan kamera ke QR Meja',
                           style: TextStyle(color: AppColors.accent, fontSize: 11),
                         ),
                       ],
                     ),
-                    IconButton(
-                      icon: Icon(
-                        _flashOn ? Icons.flash_on : Icons.flash_off,
-                        color: _flashOn ? AppColors.accent : Colors.white70,
-                      ),
-                      onPressed: () {
-                        setState(() => _flashOn = !_flashOn);
-                      },
+                    Row(
+                      children: [
+                        // Flashlight Toggle
+                        IconButton(
+                          icon: Icon(
+                            _flashOn ? Icons.flash_on : Icons.flash_off,
+                            color: _flashOn ? AppColors.accent : Colors.white70,
+                          ),
+                          onPressed: () async {
+                            await _scannerController.toggleTorch();
+                            setState(() => _flashOn = !_flashOn);
+                          },
+                        ),
+                        // Switch Camera Front/Back
+                        IconButton(
+                          icon: const Icon(Icons.flip_camera_ios, color: Colors.white70),
+                          onPressed: () => _scannerController.switchCamera(),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -525,7 +602,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
             ),
           ),
 
-          // BOTTOM INSTRUCTIONS & ACTION BUTTONS
+          // 4. BOTTOM INSTRUCTIONS & ACTION BUTTONS
           Positioned(
             bottom: 0,
             left: 0,
@@ -544,22 +621,22 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
-                      'Posisikan QR Code meja di dalam kotak bidik',
+                      'Posisikan QR Code meja di dalam kotak bidik kamera',
                       style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Nomor meja akan otomatis terisi dan terkunci di aplikasi.',
+                      'Kamera akan otomatis mendeteksi barcode secara instan.',
                       style: TextStyle(color: Colors.grey.shade400, fontSize: 11),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 18),
 
                     // Quick Action Buttons
                     Row(
                       children: [
-                        // Button Simulasi Meja (Sangat cocok untuk Ujikom / Presentasi)
+                        // Button Simulasi Meja (Bila sedang diuji tanpa kamera fisik)
                         Expanded(
                           child: ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
