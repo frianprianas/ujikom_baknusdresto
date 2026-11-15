@@ -7,6 +7,7 @@ import '../models/table.dart';
 import '../services/api_service.dart';
 import '../theme/app_colors.dart';
 import 'cart_screen.dart';
+import 'qr_scanner_screen.dart';
 import 'table_picker_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -173,6 +174,25 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<void> _openQrScanner() async {
+    final table = await Navigator.push<RestaurantTableModel>(
+      context,
+      MaterialPageRoute(builder: (_) => const QrScannerScreen()),
+    );
+    if (table != null) {
+      widget.onOrderTypeChanged?.call('dine-in');
+      widget.onTableSelected?.call(table);
+      setState(() => _localTable = table);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Tersambung ke ${table.tableNumber} via QR Code!'),
+          backgroundColor: AppColors.success,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -211,6 +231,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.qr_code_scanner, size: 22),
+            tooltip: 'Scan Barcode Meja',
+            onPressed: _openQrScanner,
+          ),
           IconButton(
             icon: const Icon(Icons.settings, size: 20),
             tooltip: 'Pengaturan Server API',
@@ -290,31 +315,31 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   // Quick Action Info
                   if (_currentOrderType == 'dine-in')
-                    InkWell(
-                      onTap: () async {
-                        final table = await Navigator.push<RestaurantTableModel>(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => TablePickerScreen(selectedTable: _selectedTable),
-                          ),
-                        );
-                        if (table != null) {
-                          widget.onTableSelected?.call(table);
-                          setState(() => _localTable = table);
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.white24),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.table_restaurant, color: AppColors.accent, size: 16),
-                            const SizedBox(width: 8),
-                            Expanded(
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.white24),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.table_restaurant, color: AppColors.accent, size: 16),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: InkWell(
+                              onTap: () async {
+                                final table = await Navigator.push<RestaurantTableModel>(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => TablePickerScreen(selectedTable: _selectedTable),
+                                  ),
+                                );
+                                if (table != null) {
+                                  widget.onTableSelected?.call(table);
+                                  setState(() => _localTable = table);
+                                }
+                              },
                               child: Text(
                                 _selectedTable != null
                                     ? 'Meja: ${_selectedTable!.tableNumber} (${_selectedTable!.capacity} Kursi)'
@@ -323,10 +348,48 @@ class _HomeScreenState extends State<HomeScreen> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            const Text('Ganti →', style: TextStyle(color: AppColors.accent, fontSize: 11, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(width: 6),
+                          // Tombol Scan Barcode Meja
+                          InkWell(
+                            onTap: _openQrScanner,
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: AppColors.accent,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.qr_code_scanner, color: Colors.black, size: 13),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Scan QR',
+                                    style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.w900),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          InkWell(
+                            onTap: () async {
+                              final table = await Navigator.push<RestaurantTableModel>(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => TablePickerScreen(selectedTable: _selectedTable),
+                                ),
+                              );
+                              if (table != null) {
+                                widget.onTableSelected?.call(table);
+                                setState(() => _localTable = table);
+                              }
+                            },
+                            child: const Text('Ganti →', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
+                          ),
+                        ],
                       ),
                     )
                   else

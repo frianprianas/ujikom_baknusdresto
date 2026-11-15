@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/table.dart';
 import '../services/api_service.dart';
 import '../theme/app_colors.dart';
+import 'qr_scanner_screen.dart';
 
 class TablePickerScreen extends StatefulWidget {
   final RestaurantTableModel? selectedTable;
@@ -58,10 +59,28 @@ class _TablePickerScreenState extends State<TablePickerScreen> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.qr_code_scanner),
+            tooltip: 'Scan Barcode Meja',
+            onPressed: () async {
+              final table = await Navigator.push<RestaurantTableModel>(
+                context,
+                MaterialPageRoute(builder: (_) => const QrScannerScreen()),
+              );
+              if (table != null && mounted) {
+                if (widget.isTabScreen) {
+                  widget.onTablePicked?.call(table);
+                  setState(() => _currentSelection = table);
+                } else {
+                  Navigator.pop(context, table);
+                }
+              }
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadTables,
             tooltip: 'Segarkan Meja',
-          )
+          ),
         ],
       ),
       body: _isLoading
@@ -116,6 +135,36 @@ class _TablePickerScreenState extends State<TablePickerScreen> {
                           _buildLegend(AppColors.accent, 'Booking'),
                           _buildLegend(AppColors.danger, 'Terisi'),
                         ],
+                      ),
+                      const SizedBox(height: 12),
+                      // Tombol Scan Barcode Meja
+                      SizedBox(
+                        width: double.infinity,
+                        height: 38,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.accent,
+                            foregroundColor: Colors.black,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          icon: const Icon(Icons.qr_code_scanner, size: 16),
+                          label: const Text('Scan QR Code di Atas Meja', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                          onPressed: () async {
+                            final table = await Navigator.push<RestaurantTableModel>(
+                              context,
+                              MaterialPageRoute(builder: (_) => const QrScannerScreen()),
+                            );
+                            if (table != null && mounted) {
+                              if (widget.isTabScreen) {
+                                widget.onTablePicked?.call(table);
+                                setState(() => _currentSelection = table);
+                              } else {
+                                Navigator.pop(context, table);
+                              }
+                            }
+                          },
+                        ),
                       ),
                     ],
                   ),
