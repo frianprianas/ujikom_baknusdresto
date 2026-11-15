@@ -144,7 +144,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
 
             const Text(
               'QR Meja Terverifikasi!',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textMain),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.textDark),
             ),
             const SizedBox(height: 4),
             Text(
@@ -179,7 +179,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                       children: [
                         Text(
                           table.tableNumber,
-                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppColors.textMain),
+                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: AppColors.textDark),
                         ),
                         const SizedBox(height: 2),
                         Text(
@@ -312,7 +312,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
           children: [
             const Text(
               'Simulasi Scan QR Meja (Ujikom)',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textMain),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: AppColors.textDark),
             ),
             const SizedBox(height: 4),
             const Text(
@@ -355,7 +355,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
                         children: [
                           Text(
                             t.tableNumber,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textMain),
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textDark),
                           ),
                           Text(
                             '${t.capacity} Kursi',
@@ -492,7 +492,7 @@ class _QrScannerScreenState extends State<QrScannerScreen>
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.between,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     IconButton(
                       icon: const Icon(Icons.arrow_back, color: Colors.white),
