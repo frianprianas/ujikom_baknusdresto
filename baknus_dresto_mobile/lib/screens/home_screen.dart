@@ -654,7 +654,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 initialTable: _selectedTable,
                                 onCartUpdated: () => setState(() {}),
                                 onTableSelected: (tbl) {
-                                  widget.onTableSelected?.call(tbl);
+                                  if (tbl != null) {
+                                    widget.onTableSelected?.call(tbl);
+                                  }
                                   setState(() => _localTable = tbl);
                                 },
                                 onOrderTypeChanged: (type) {
